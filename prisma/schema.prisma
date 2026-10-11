@@ -11,3 +11,62 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+model User {
+  id               String    @id @default(uuid())
+  email            String    @unique
+  password         String?
+  phone            String?
+  firstName        String 
+  lastName         String
+  emailVerified    Boolean   @default(false)
+  lastLoginAt      DateTime?
+  isActive         Boolean   @default(true)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  refreshTokens    RefreshToken[]
+  otpVerifications EmailOtpVerification[]
+  resetTokens      PasswordResetToken[]
+}
+
+model RefreshToken {
+  id            String        @id   @default(uuid())
+  userId        String
+  user          User          @relation(fields: [userId],references: [id])
+  tokenHash     String        @unique
+  expiresAt     DateTime  
+  revokedAt     DateTime?
+  replaceByTokenId String?
+  createdAt     DateTime      @default(now())
+
+  @@index([userId])
+}
+
+model EmailOtpVerification {
+  id            String      @id   @default(uuid())
+  userId        String
+  user          User        @relation(fields: [userId],references: [id])
+  otpHash       String
+  expiresAt     DateTime
+  verifiedAt    DateTime?
+  attempts      Int         @default(0)
+  createdAt     DateTime    @default(now())
+
+  @@index([userId])
+}
+
+model PasswordResetToken {
+  id                   String      @id  @default(uuid())
+  userId               String
+  user                 User        @relation(fields: [userId],references: [id]) 
+  tokenHash            String      @unique
+  expiresAt            DateTime
+  usedAt               DateTime?
+  replaceByTokenId     String?
+  createdAt            DateTime    @default(now())
+
+  @@index([userId])
+  @@index([userId,tokenHash])
+}
+
